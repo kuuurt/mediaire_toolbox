@@ -17,8 +17,6 @@ class Task(object):
             transaction id this task belongs to
         tag: str
             String specifying the task. Unique for each task.
-        input: object
-        output: object
         data: dict
         timestamp: float
             Timestamp of task creation from`time.time()`
@@ -31,7 +29,7 @@ class Task(object):
         self.tag = tag
         self.timestamp = timestamp or int(time.time())
         self.update_timestamp = update_timestamp
-        self.data = data or {}
+        self.data = data
         self.error = error
         # self.update = None
 
