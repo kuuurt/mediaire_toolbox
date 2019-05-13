@@ -6,6 +6,7 @@ import redis
 import uuid
 import hashlib
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ class RedisWQ(object):
     def _itemkey(self, item):
         """Returns a string that uniquely identifies an item (bytes)."""
         return hashlib.sha224(item).hexdigest()
-    
+
     def _lease_exists(self, item):
         """True if a lease on 'item' exists."""
         return self._db.exists(self._lease_key_prefix + self._itemkey(item))
@@ -94,8 +95,42 @@ class RedisWQ(object):
     def put(self, item):
         self._db.lpush(self._main_q_key, item)
 
+    @staticmethod
+    def _get_timestamp():
+        return time.gmtime(time.time()).tm_min
+
+    def _limit_rate(self, limit):
+        """
+        Limits the rate of items leased in the queue.
+
+        Parameters
+        ----------
+        limit: int
+            Maximum leases per minute
+
+        Returns
+        -------
+        bool
+            False if lease hit maximum rate
+        """
+        if not limit:
+            return True
+        minute = self._get_timestamp()
+        rate_key = "{}:limit:{}".format(self._session, str(minute))
+        result = self._db.get(rate_key)
+        if result:
+            if result[0] >= limit:
+                return False
+        self._db.get(rate_key)
+        # atomic operation
+        pipe = self._db.pipeline()
+        pipe.incr(rate_key)
+        pipe.expire(rate_key, 60)
+        pipe.execute()
+        return True
+
     # for now `lease_secs` is useless!
-    def lease(self, lease_secs=5, block=True, timeout=None):
+    def lease(self, lease_secs=5, block=True, timeout=None, limit=None):
         """Begin working on an item the work queue.
 
         Lease the item for lease_secs.  After that time, other
@@ -116,6 +151,10 @@ class RedisWQ(object):
             # Note: if we crash at this line of the program, then GC will
             # see no lease
             # for this item a later return it to the main queue.
+            while True:
+                if self._limit_rate(limit):
+                    break
+                time.sleep(10)
             itemkey = self._itemkey(item)
             logger.info('{} -> {}'.format(self._lease_key_prefix + itemkey,
                                           self._session))
@@ -165,7 +204,7 @@ class RedisWQ(object):
     @staticmethod
     def get_all_queues_from_config(appconfig: dict, redis_args: dict):
         queues = {
-            q_identifier: RedisWQ(q_key, **redis_args) 
+            q_identifier: RedisWQ(q_key, **redis_args)
             for q_identifier, q_key in appconfig['shared']['queues'].items()
         }
         return queues
