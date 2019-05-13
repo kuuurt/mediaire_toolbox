@@ -1,15 +1,13 @@
 import unittest
 from copy import deepcopy
 
-from mediaire_toolbox.queue.tasks import Task, DicomTask
+from mediaire_toolbox.queue.tasks import Task, Task
 
 
 class TestTask(unittest.TestCase):
 
     def setUp(self):
         self.task = Task(tag='tag',
-                         input={'t1': 'foo', 't2': 'bar'},
-                         output={'out': 'foo'},                         
                          error="an error")
 
     def test_to_dict(self):
@@ -46,10 +44,10 @@ class TestTask(unittest.TestCase):
         self.assertEqual(self.task.output, parent_task_output)
 
 
-class TestDicomTask(unittest.TestCase):
+class TestTask(unittest.TestCase):
 
     def setUp(self):
-        self.task_d = {"t_id": 1, 
+        self.task_d = {"t_id": 1,
                        "tag": "spm_lesion",
                        "output": {"foo": "bar"},
                        "timestamp": 1530368396,
@@ -60,18 +58,18 @@ class TestDicomTask(unittest.TestCase):
                                      }
                                 }
                        }
-    
+
     def test_read_dict(self):
-        task = DicomTask().read_dict(self.task_d)
+        task = Task().read_dict(self.task_d)
         self.assertEqual(task.data['dicom_info']['t1']['path'], "path")
 
     def test_get_subject_name(self):
-        task = DicomTask().read_dict(self.task_d)
+        task = Task().read_dict(self.task_d)
         name = task.get_subject_name()
         self.assertEqual(name, 'Max')
 
     def test_create_child(self):
-        task = DicomTask().read_dict(self.task_d)
+        task = Task().read_dict(self.task_d)
         new_tag = 'child_task'
         child_task = task.create_child(new_tag)
         self.assertEqual(child_task.t_id, task.t_id)
@@ -83,17 +81,17 @@ class TestDicomTask(unittest.TestCase):
                                 task.timestamp)
 
     def test_child_does_not_influence_parent(self):
-        task = DicomTask().read_dict(self.task_d)
+        task = Task().read_dict(self.task_d)
         new_tag = 'child_task'
-        parent_task_output = deepcopy(task.output)
+        parent_task_data = deepcopy(task.data)
         child_task = task.create_child(new_tag)
         # change input of `child_task`
-        child_task.input['out'] = 'bar'
+        child_task.data['out'] = 'bar'
         # this should not change output of parent task
-        self.assertEqual(task.output, parent_task_output)
+        self.assertEqual(task.data, parent_task_data)
 
     def test_child_get_subject_name(self):
-        task = DicomTask().read_dict(self.task_d)
+        task = Task().read_dict(self.task_d)
         new_tag = 'child_task'
         child_task = task.create_child(new_tag)
         name = child_task.get_subject_name()

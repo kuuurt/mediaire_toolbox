@@ -26,7 +26,7 @@ class QueueDaemon(ABC):
         """
         Parameters
         ----------
-        
+
         input_queue:
             A Redis queue instance from which we will consume Tasks
         result_queue:
@@ -62,7 +62,7 @@ class QueueDaemon(ABC):
         try:
             # TODO Make this class a parameter for better generalization
             # how to do reflection in python?
-            task = tasks.DicomTask().read_bytes(item)
+            task = tasks.Task().read_bytes(item)
         except Exception as e:
             logger.exception(
                 "Operating error or error deserializing task object")
