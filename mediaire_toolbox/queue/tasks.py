@@ -32,10 +32,6 @@ class Task(object):
         self.timestamp = timestamp or int(time.time())
         self.update_timestamp = update_timestamp
         self.data = data or {}
-        if data:
-            self.data = data
-        else:
-            self.data = {}
         self.error = error
         # self.update = None
 
