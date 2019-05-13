@@ -101,17 +101,18 @@ class RedisWQ(object):
 
     def _limit_rate(self, limit):
         """
-        Limits the rate of items leased in the queue.
+        Limits the rate of items leased in the queue. Counts the leases
+        at each minute, after the limit is reached, no more leases are allowed.
 
         Parameters
         ----------
         limit: int
-            Maximum leases per minute
+            Maximum leases per minute, None if there is no limit.
 
         Returns
         -------
         bool
-            False if lease hit maximum rate
+            True if limit not reached, False if lease hit maximum rate.
         """
         if not limit:
             return True
