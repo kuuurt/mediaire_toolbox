@@ -7,7 +7,7 @@ from copy import deepcopy
 class Task(object):
     """Defines task objects that can be handled by the task manager."""
 
-    def __init__(self, t_id=None, tag=None, input=None, output=None, data=None,
+    def __init__(self, t_id=None, tag=None, data=None,
                  timestamp=None, update_timestamp=None, error=None):
         """Initializes the Task object.
 
@@ -31,7 +31,11 @@ class Task(object):
         self.tag = tag
         self.timestamp = timestamp or int(time.time())
         self.update_timestamp = update_timestamp
-        self.data = data
+        self.data = data or {}
+        if data:
+            self.data = data
+        else:
+            self.data = {}
         self.error = error
         # self.update = None
 
