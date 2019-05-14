@@ -1,7 +1,7 @@
 import unittest
 from copy import deepcopy
 
-from mediaire_toolbox.queue.tasks import Task, Task
+from mediaire_toolbox.queue.tasks import Task
 
 
 class TestTask(unittest.TestCase):
